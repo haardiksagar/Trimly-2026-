@@ -28,4 +28,7 @@ public class UrlMapping {
     private LocalDateTime createdAt;
     @Column(name = "external_ID")
     private UUID externalID;
+    
+    @Column(name = "user_id")
+    private String userId;
 }

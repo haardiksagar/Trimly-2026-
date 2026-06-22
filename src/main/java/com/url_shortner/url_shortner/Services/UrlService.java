@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class UrlService {
@@ -15,11 +16,12 @@ public class UrlService {
     @Autowired
     private UrlRepository urlRepository;
 
-    public String shortenUrl(String longUrl) {
+    public String shortenUrl(String longUrl, String userId) {
         UrlMapping mapping = new UrlMapping();
         mapping.setOriginalUrl(longUrl);
         mapping.setClickCount(0L);
         mapping.setCreatedAt(LocalDateTime.now());
+        mapping.setUserId(userId);
 
         UrlMapping saved = urlRepository.save(mapping);
         String token = Base62Encoder.encode(saved.getId());
@@ -37,5 +39,9 @@ public class UrlService {
         urlRepository.save(mapping);
 
         return mapping.getOriginalUrl();
+    }
+
+    public List<UrlMapping> getUserUrls(String userId) {
+        return urlRepository.findByUserId(userId);
     }
 }
