@@ -132,7 +132,7 @@
 
   <dialog id="auth-modal" class="auth-modal">
     <form class="auth-form" id="auth-form">
-      <h2 id="auth-title">Log in or Sign up</h2>
+      <h2 id="auth-title">Log in to Trimly</h2>
       <p id="auth-error" class="form-message invalid" hidden></p>
 
       <div id="auth-step-1">
@@ -140,8 +140,12 @@
           <label for="auth-email">Email</label>
           <input type="email" id="auth-email" required>
         </div>
+        <div class="input-row-auth" id="password-container">
+          <label for="auth-password">Password</label>
+          <input type="password" id="auth-password" required minlength="6">
+        </div>
         <button class="primary-button" type="submit" id="auth-submit">
-          <span class="button-label">Send Login Code</span>
+          <span class="button-label">Log in</span>
         </button>
       </div>
 
@@ -180,6 +184,10 @@
         </svg>
         <span class="button-label">Continue with Google</span>
       </button>
+
+      <p class="auth-toggle-text" id="auth-toggle-container">
+        Don't have an account? <a href="#" id="auth-toggle">Sign up</a>
+      </p>
 
       <button type="button" class="icon-button close-modal" id="auth-close" aria-label="Close">
         <svg viewBox="0 0 24 24" aria-hidden="true">

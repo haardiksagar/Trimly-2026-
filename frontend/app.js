@@ -2,8 +2,8 @@ import "./styles.css";
 import { createClient } from "@supabase/supabase-js";
 
 // Initialize Supabase
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://macacumeoaqpdifwllir.supabase.co";
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
+const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL || "https://macacumeoaqpdifwllir.supabase.co").trim();
+const SUPABASE_ANON_KEY = (import.meta.env.VITE_SUPABASE_ANON_KEY || "").trim();
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const API_BASE_URL = window.TRIMLY_API_BASE_URL ?? "";
@@ -32,12 +32,15 @@ const authForm = document.querySelector("#auth-form");
 const authTitle = document.querySelector("#auth-title");
 const authError = document.querySelector("#auth-error");
 const authEmail = document.querySelector("#auth-email");
+const authPassword = document.querySelector("#auth-password");
 const authStep1 = document.querySelector("#auth-step-1");
 const authStep2 = document.querySelector("#auth-step-2");
 const authOtp = document.querySelector("#auth-otp");
 const authSubmit = document.querySelector("#auth-submit");
 const authVerifySubmit = document.querySelector("#auth-verify-submit");
 const authBack = document.querySelector("#auth-back");
+const authToggle = document.querySelector("#auth-toggle");
+const authToggleContainer = document.querySelector("#auth-toggle-container");
 const authClose = document.querySelector("#auth-close");
 const loginBtn = document.querySelector("#auth-login-btn");
 const logoutBtn = document.querySelector("#auth-logout-btn");
@@ -47,11 +50,15 @@ const profilePic = document.querySelector("#profile-pic");
 let currentShortUrl = "";
 let currentSession = null;
 let currentAuthEmail = "";
+let isLoginMode = true;
 let isOtpStep = false;
+let isRegistering = false;
 
 // Auth State Management
 supabase.auth.onAuthStateChange((event, session) => {
   currentSession = session;
+  if (isRegistering) return; // Prevent auto-login UI changes during signup OTP verification
+
   if (session?.user) {
     loginBtn.hidden = true;
     logoutBtn.hidden = false;
@@ -80,15 +87,29 @@ supabase.auth.onAuthStateChange((event, session) => {
 // Auth UI Logic
 function resetAuthUI() {
   authError.hidden = true;
+  authError.style.color = ""; // reset color
   authStep1.hidden = false;
   authStep2.hidden = true;
+  authToggleContainer.hidden = false;
   isOtpStep = false;
   currentAuthEmail = "";
   authOtp.value = "";
-  authTitle.textContent = "Log in or Sign up";
+
+  if (isLoginMode) {
+    authTitle.textContent = "Log in to Trimly";
+    authToggle.textContent = "Sign up";
+    authToggle.previousSibling.textContent = "Don't have an account? ";
+    authSubmit.querySelector(".button-label").textContent = "Log in";
+  } else {
+    authTitle.textContent = "Sign up for Trimly";
+    authToggle.textContent = "Log in";
+    authToggle.previousSibling.textContent = "Already have an account? ";
+    authSubmit.querySelector(".button-label").textContent = "Sign up";
+  }
 }
 
 loginBtn.addEventListener("click", () => {
+  isLoginMode = true;
   resetAuthUI();
   authModal.showModal();
 });
@@ -100,6 +121,12 @@ logoutBtn.addEventListener("click", async () => {
 authClose.addEventListener("click", () => authModal.close());
 
 authBack.addEventListener("click", () => resetAuthUI());
+
+authToggle.addEventListener("click", (e) => {
+  e.preventDefault();
+  isLoginMode = !isLoginMode;
+  resetAuthUI();
+});
 
 googleBtn.addEventListener("click", async () => {
   authError.hidden = true;
@@ -119,45 +146,99 @@ authForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   authError.hidden = true;
 
-  if (!isOtpStep) {
-    // Step 1: Request OTP
-    authSubmit.disabled = true;
-    authSubmit.querySelector(".button-label").textContent = "Sending...";
-    
-    currentAuthEmail = authEmail.value;
-    const { error } = await supabase.auth.signInWithOtp({ email: currentAuthEmail });
-    
-    authSubmit.disabled = false;
-    authSubmit.querySelector(".button-label").textContent = "Send Login Code";
+  try {
+    if (!isOtpStep) {
+      authSubmit.disabled = true;
+      authSubmit.querySelector(".button-label").textContent = "Please wait...";
 
-    if (error) {
-      authError.textContent = error.message;
-      authError.hidden = false;
+      currentAuthEmail = authEmail.value;
+      const password = authPassword.value;
+
+      if (isLoginMode) {
+        // Step 1: Login flow
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: currentAuthEmail,
+          password
+        });
+
+        if (error) {
+          authError.textContent = error.message;
+          authError.hidden = false;
+        }
+        authSubmit.disabled = false;
+        authSubmit.querySelector(".button-label").textContent = "Log in";
+      } else {
+        // Step 1: Signup flow -> Requires OTP next
+        const { data, error } = await supabase.auth.signUp({
+          email: currentAuthEmail,
+          password
+        });
+
+        if (error) {
+          let errorMsg = error.message;
+          if (!errorMsg || errorMsg === "{}" || error.status === 500) {
+            errorMsg = "Server Error 500: Resend blocked the email. Remember to use lucifer7572@gmail.com for testing!";
+          }
+          authError.textContent = errorMsg;
+          authError.hidden = false;
+          authSubmit.disabled = false;
+          authSubmit.querySelector(".button-label").textContent = "Sign up";
+        } else if (data?.user?.identities?.length === 0) {
+          authError.textContent = "User already exists. Please log in.";
+          authError.hidden = false;
+          authSubmit.disabled = false;
+          authSubmit.querySelector(".button-label").textContent = "Sign up";
+        } else {
+          // Success: move to OTP step
+          isOtpStep = true;
+          authStep1.hidden = true;
+          authToggleContainer.hidden = true;
+          authStep2.hidden = false;
+          authTitle.textContent = "Verify Email";
+          authSubmit.disabled = false;
+          authSubmit.querySelector(".button-label").textContent = "Sign up";
+        }
+      }
     } else {
-      isOtpStep = true;
-      authStep1.hidden = true;
-      authStep2.hidden = false;
-      authTitle.textContent = "Verify Code";
-    }
-  } else {
-    // Step 2: Verify OTP
-    authVerifySubmit.disabled = true;
-    authVerifySubmit.querySelector(".button-label").textContent = "Verifying...";
-    
-    const { error } = await supabase.auth.verifyOtp({ 
-      email: currentAuthEmail, 
-      token: authOtp.value, 
-      type: 'email' 
-    });
-    
-    authVerifySubmit.disabled = false;
-    authVerifySubmit.querySelector(".button-label").textContent = "Verify Code";
+      // Step 2: Verify OTP
+      authVerifySubmit.disabled = true;
+      authVerifySubmit.querySelector(".button-label").textContent = "Verifying...";
 
-    if (error) {
-      authError.textContent = error.message;
-      authError.hidden = false;
+      isRegistering = true;
+      const { error } = await supabase.auth.verifyOtp({
+        email: currentAuthEmail,
+        token: authOtp.value,
+        type: 'signup'
+      });
+
+      authVerifySubmit.disabled = false;
+      authVerifySubmit.querySelector(".button-label").textContent = "Verify Code";
+
+      if (error) {
+        isRegistering = false;
+        authError.textContent = error.message;
+        authError.style.color = "";
+        authError.hidden = false;
+      } else {
+        // Success! Sign them out so they are forced to log in manually
+        isRegistering = false;
+        await supabase.auth.signOut();
+
+        // Reset UI to login mode and show success message
+        isLoginMode = true;
+        resetAuthUI();
+        authError.textContent = "Registration successful! Please log in.";
+        authError.style.color = "var(--green)";
+        authError.hidden = false;
+      }
     }
-    // Success is handled by onAuthStateChange listener
+  } catch (err) {
+    console.error("Auth form error:", err);
+    alert("Javascript Error: " + err.message);
+    authSubmit.disabled = false;
+    if (authSubmit.querySelector(".button-label")) {
+      authSubmit.querySelector(".button-label").textContent = isLoginMode ? "Log in" : "Sign up";
+    }
   }
 });
 
