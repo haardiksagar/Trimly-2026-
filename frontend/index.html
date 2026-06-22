@@ -142,7 +142,7 @@
         </div>
         <div class="input-row-auth" id="password-container">
           <label for="auth-password">Password</label>
-          <input type="password" id="auth-password" required minlength="6">
+          <input type="password" id="auth-password" required minlength="">
         </div>
         <button class="primary-button" type="submit" id="auth-submit">
           <span class="button-label">Log in</span>
@@ -154,7 +154,7 @@
           code to your email.</p>
         <div class="input-row-auth">
           <label for="auth-otp">6-Digit Code</label>
-          <input type="text" id="auth-otp" required minlength="6" maxlength="6" pattern="\d{6}">
+          <input type="text" id="auth-otp" minlength="6" maxlength="6" pattern="\d{6}">
         </div>
         <button class="primary-button" type="submit" id="auth-verify-submit">
           <span class="button-label">Verify Code</span>
