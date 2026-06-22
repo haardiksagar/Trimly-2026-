@@ -32,10 +32,13 @@ const authForm = document.querySelector("#auth-form");
 const authTitle = document.querySelector("#auth-title");
 const authError = document.querySelector("#auth-error");
 const authEmail = document.querySelector("#auth-email");
-const authPassword = document.querySelector("#auth-password");
-const authToggle = document.querySelector("#auth-toggle");
+const authStep1 = document.querySelector("#auth-step-1");
+const authStep2 = document.querySelector("#auth-step-2");
+const authOtp = document.querySelector("#auth-otp");
+const authSubmit = document.querySelector("#auth-submit");
+const authVerifySubmit = document.querySelector("#auth-verify-submit");
+const authBack = document.querySelector("#auth-back");
 const authClose = document.querySelector("#auth-close");
-const authSubmitBtn = document.querySelector("#auth-submit");
 const loginBtn = document.querySelector("#auth-login-btn");
 const logoutBtn = document.querySelector("#auth-logout-btn");
 const googleBtn = document.querySelector("#auth-google-btn");
@@ -43,7 +46,8 @@ const profilePic = document.querySelector("#profile-pic");
 
 let currentShortUrl = "";
 let currentSession = null;
-let isLoginMode = true;
+let currentAuthEmail = "";
+let isOtpStep = false;
 
 // Auth State Management
 supabase.auth.onAuthStateChange((event, session) => {
@@ -74,9 +78,18 @@ supabase.auth.onAuthStateChange((event, session) => {
 });
 
 // Auth UI Logic
+function resetAuthUI() {
+  authError.hidden = true;
+  authStep1.hidden = false;
+  authStep2.hidden = true;
+  isOtpStep = false;
+  currentAuthEmail = "";
+  authOtp.value = "";
+  authTitle.textContent = "Log in or Sign up";
+}
+
 loginBtn.addEventListener("click", () => {
-  isLoginMode = true;
-  updateAuthUI();
+  resetAuthUI();
   authModal.showModal();
 });
 
@@ -86,11 +99,7 @@ logoutBtn.addEventListener("click", async () => {
 
 authClose.addEventListener("click", () => authModal.close());
 
-authToggle.addEventListener("click", (e) => {
-  e.preventDefault();
-  isLoginMode = !isLoginMode;
-  updateAuthUI();
-});
+authBack.addEventListener("click", () => resetAuthUI());
 
 googleBtn.addEventListener("click", async () => {
   authError.hidden = true;
@@ -106,37 +115,50 @@ googleBtn.addEventListener("click", async () => {
   }
 });
 
-function updateAuthUI() {
-  authError.hidden = true;
-  authTitle.textContent = isLoginMode ? "Log in to Trimly" : "Sign up for Trimly";
-  authToggle.textContent = isLoginMode ? "Sign up" : "Log in";
-  authToggle.previousSibling.textContent = isLoginMode ? "Don't have an account? " : "Already have an account? ";
-  authSubmitBtn.querySelector(".button-label").textContent = isLoginMode ? "Log in" : "Sign up";
-}
-
 authForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   authError.hidden = true;
-  authSubmitBtn.disabled = true;
-  authSubmitBtn.querySelector(".button-label").textContent = "Please wait...";
 
-  const email = authEmail.value;
-  const password = authPassword.value;
+  if (!isOtpStep) {
+    // Step 1: Request OTP
+    authSubmit.disabled = true;
+    authSubmit.querySelector(".button-label").textContent = "Sending...";
+    
+    currentAuthEmail = authEmail.value;
+    const { error } = await supabase.auth.signInWithOtp({ email: currentAuthEmail });
+    
+    authSubmit.disabled = false;
+    authSubmit.querySelector(".button-label").textContent = "Send Login Code";
 
-  const { data, error } = isLoginMode
-    ? await supabase.auth.signInWithPassword({ email, password })
-    : await supabase.auth.signUp({ email, password });
+    if (error) {
+      authError.textContent = error.message;
+      authError.hidden = false;
+    } else {
+      isOtpStep = true;
+      authStep1.hidden = true;
+      authStep2.hidden = false;
+      authTitle.textContent = "Verify Code";
+    }
+  } else {
+    // Step 2: Verify OTP
+    authVerifySubmit.disabled = true;
+    authVerifySubmit.querySelector(".button-label").textContent = "Verifying...";
+    
+    const { error } = await supabase.auth.verifyOtp({ 
+      email: currentAuthEmail, 
+      token: authOtp.value, 
+      type: 'email' 
+    });
+    
+    authVerifySubmit.disabled = false;
+    authVerifySubmit.querySelector(".button-label").textContent = "Verify Code";
 
-  if (error) {
-    authError.textContent = error.message;
-    authError.hidden = false;
-  } else if (!isLoginMode && data?.user?.identities?.length === 0) {
-    authError.textContent = "User already exists. Please log in.";
-    authError.hidden = false;
+    if (error) {
+      authError.textContent = error.message;
+      authError.hidden = false;
+    }
+    // Success is handled by onAuthStateChange listener
   }
-
-  authSubmitBtn.disabled = false;
-  authSubmitBtn.querySelector(".button-label").textContent = isLoginMode ? "Log in" : "Sign up";
 });
 
 // Helper Functions
