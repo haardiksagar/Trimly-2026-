@@ -55,7 +55,7 @@ sequenceDiagram
 
 | Component | Technology | Description |
 | :--- | :--- | :--- |
-| **Backend** | Spring Boot 3 (Java 17) | Handles API requests, JWT validation, and high-speed redirects. |
+| **Backend** | Spring Boot (Java 23) | Handles API requests, JWT validation, and high-speed redirects. |
 | **Frontend** | Vite + Vanilla JS | A lightweight, fast-loading user interface with zero heavy frameworks. |
 | **Database** | PostgreSQL | Hosted via Supabase, utilizing JPA/Hibernate for SQLi protection. |
 | **Auth** | Supabase Auth | Provides secure OAuth and OTP login infrastructure. |
