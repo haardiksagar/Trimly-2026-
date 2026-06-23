@@ -29,8 +29,19 @@
           <span>My links</span>
         </a>
         <button class="text-button" id="auth-login-btn">Log in</button>
-        <img src="" alt="Profile picture" class="profile-pic" id="profile-pic" hidden>
-        <button class="text-button" id="auth-logout-btn" hidden>Sign out</button>
+        <div class="profile-container" id="profile-container" hidden>
+          <img src="" alt="Profile picture" class="profile-pic" id="profile-pic" hidden>
+          <div class="profile-placeholder" id="profile-placeholder" hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </div>
+          <div class="profile-dropdown" id="profile-dropdown">
+            <div class="profile-dropdown-header" id="profile-email"></div>
+            <button class="text-button dropdown-item" id="auth-logout-btn">Sign out</button>
+          </div>
+        </div>
       </nav>
     </header>
 

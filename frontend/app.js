@@ -45,7 +45,11 @@ const authClose = document.querySelector("#auth-close");
 const loginBtn = document.querySelector("#auth-login-btn");
 const logoutBtn = document.querySelector("#auth-logout-btn");
 const googleBtn = document.querySelector("#auth-google-btn");
+const profileContainer = document.querySelector("#profile-container");
 const profilePic = document.querySelector("#profile-pic");
+const profilePlaceholder = document.querySelector("#profile-placeholder");
+const profileDropdown = document.querySelector("#profile-dropdown");
+const profileEmail = document.querySelector("#profile-email");
 
 let currentShortUrl = "";
 let currentSession = null;
@@ -61,14 +65,17 @@ supabase.auth.onAuthStateChange((event, session) => {
 
   if (session?.user) {
     loginBtn.hidden = true;
-    logoutBtn.hidden = false;
+    profileContainer.hidden = false;
+    profileEmail.textContent = session.user.email;
 
     const avatarUrl = session.user.user_metadata?.avatar_url;
     if (avatarUrl) {
       profilePic.src = avatarUrl;
       profilePic.hidden = false;
+      profilePlaceholder.hidden = true;
     } else {
       profilePic.hidden = true;
+      profilePlaceholder.hidden = false;
     }
 
     authModal.close();
@@ -77,8 +84,8 @@ supabase.auth.onAuthStateChange((event, session) => {
     fetchHistoryFromDB();
   } else {
     loginBtn.hidden = false;
-    logoutBtn.hidden = true;
-    profilePic.hidden = true;
+    profileContainer.hidden = true;
+    profileDropdown.classList.remove("open");
     recentSection.hidden = true;
     recentList.innerHTML = "";
   }
@@ -108,6 +115,21 @@ function resetAuthUI() {
   }
 }
 
+// Dropdown Logic
+profileContainer.addEventListener("click", (e) => {
+  // Prevent closing when clicking inside the dropdown content (except the logout button)
+  if (e.target.closest("#profile-dropdown") && !e.target.closest("#auth-logout-btn")) {
+    return;
+  }
+  profileDropdown.classList.toggle("open");
+});
+
+document.addEventListener("click", (e) => {
+  if (!profileContainer.contains(e.target)) {
+    profileDropdown.classList.remove("open");
+  }
+});
+
 loginBtn.addEventListener("click", () => {
   isLoginMode = true;
   resetAuthUI();
@@ -115,7 +137,9 @@ loginBtn.addEventListener("click", () => {
 });
 
 logoutBtn.addEventListener("click", async () => {
+  profileDropdown.classList.remove("open");
   await supabase.auth.signOut();
+  currentShortUrl = "";
 });
 
 authClose.addEventListener("click", () => authModal.close());
@@ -315,12 +339,16 @@ async function fetchHistoryFromDB() {
     });
     if (response.ok) {
       const data = await response.json();
+      console.log("Successfully fetched links from backend:", data);
       renderHistory(data);
     } else if (response.status === 401) {
+      console.error("Backend returned 401 Unauthorized. Signing out.");
       supabase.auth.signOut();
+    } else {
+      console.error(`Backend error! Status: ${response.status}`, await response.text());
     }
   } catch (e) {
-    console.error("Failed to fetch history");
+    console.error("Network or fetch error in fetchHistoryFromDB:", e);
   }
 }
 
