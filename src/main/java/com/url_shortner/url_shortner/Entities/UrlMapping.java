@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -18,7 +19,7 @@ public class UrlMapping {
     @Column(name = "id", unique = true)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column(name = "original_url", unique = true)
+    @Column(name = "original_url")
     private String originalUrl;
     @Column(name = "short_token")
     private String shortToken;
@@ -28,7 +29,7 @@ public class UrlMapping {
     private LocalDateTime createdAt;
     @Column(name = "external_ID")
     private UUID externalID;
-    
+
     @Column(name = "user_id")
     private String userId;
 }
