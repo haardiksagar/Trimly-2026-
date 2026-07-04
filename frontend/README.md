@@ -1,39 +1,36 @@
-# Trimly frontend
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-A Vite frontend for this Spring Boot URL shortener.
+## Getting Started
 
-## Development
+First, run the development server:
 
-Start the Spring Boot backend at `http://localhost:8080`, then run:
-
-```powershell
-cd frontend
-npm install
+```bash
 npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
 ```
 
-Open `http://localhost:5173`. Vite proxies `/api` requests to Spring Boot, so no development CORS configuration is required.
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-## Production build
+You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
 
-```powershell
-npm run build
-```
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-The optimized files are written to `dist/`. They can be deployed with any static host or copied into Spring Boot's `src/main/resources/static` directory.
+## Learn More
 
-## Custom backend addresses
+To learn more about Next.js, take a look at the following resources:
 
-By default, development API requests use Vite's proxy and generated short links point to `http://localhost:8080`. For another deployment, set either global before `/app.js` loads:
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-```html
-<script>
-  window.TRIMLY_API_BASE_URL = "https://api.example.com";
-  window.TRIMLY_REDIRECT_BASE_URL = "https://short.example.com";
-</script>
-```
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-Backend contract:
+## Deploy on Vercel
 
-- `POST /api/urls` with `{ "url": "https://example.com" }`
-- `GET /{shortToken}` to follow a short link
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

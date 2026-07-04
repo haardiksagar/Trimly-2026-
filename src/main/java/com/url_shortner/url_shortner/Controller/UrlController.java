@@ -24,12 +24,13 @@ public class UrlController {
     @PostMapping
     public ShortenResponse shortenUrl(@RequestBody ShortenRequest request, @AuthenticationPrincipal Jwt jwt) {
         String userId = jwt.getClaimAsString("sub");
-        String token = urlService.shortenUrl(request.getUrl(), userId);
+        String shortUrl = urlService.shortenUrl(request.getUrl(), userId);
 
         ShortenResponse response = new ShortenResponse();
-        response.setShortToken(token);
+        response.setShortToken(shortUrl);
         return response;
     }
+    //If you use your ShortenRequest class, you are telling Spring: "I expect the incoming JSON to perfectly match this exact blueprint."
 
     @GetMapping
     public List<UrlMapping> getUserUrls(@AuthenticationPrincipal Jwt jwt) {
@@ -37,3 +38,11 @@ public class UrlController {
         return urlService.getUserUrls(userId);
     }
 }
+/*
+1. "ShortenRequest" is just a simple Java class (like a blueprint for a box) that tells 
+Spring Boot: "Expect a JSON object that contains a long URL."
+2. "@RequestBody" is an instruction to Spring Boot that says: "Take the raw data sent in the HTTP request, 
+open it up, and neatly pack it into our ShortenRequest box so we can use it easily in our code."
+
+3.@AuthenticationPrincipal Jwt jwt -> That massive string of random-looking characters next to "access_token" (starting with eyJhbGci...) in your screenshot is the JWT (JSON Web Token).
+*/
